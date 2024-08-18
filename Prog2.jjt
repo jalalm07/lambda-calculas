@@ -1,0 +1,158 @@
+options {
+MULTI=true;
+STATIC=false;
+}
+
+PARSER_BEGIN(Prog2)
+import java.util.Scanner;
+class Prog2 {
+  public static void main(String[] args) throws ParseException, CloneNotSupportedException {
+System.out.println(">>> Lambda Expression Evaluator <<<");
+
+//****************************generate the AST for any applied Lambda expression**********************//
+
+System.out.println("Enter an applied Lambda expression:");    
+Prog2 parser = new Prog2(System.in);
+    ASTStart start = parser.Start();
+System.out.println();
+System.out.println("The abstract syntax tree:");
+    start.dumpAST("");
+System.out.println();
+
+//*****************************call method for concreate syntax print*********************************//
+
+System.out.println("The Lambda expression in the concrete syntax:");
+start.astToString();
+System.out.println();
+
+//*****************************Free Variables*********************************************************//
+
+System.out.println();
+System.out.println("The abstract syntax tree with free variables: \n");
+start.dumpFV("", null);
+System.out.println();
+
+//*****************************Substitution**********************************************************//
+
+System.out.println("Enter an applied Lambda expression:");
+Prog2 parser2 = new Prog2(System.in);
+ASTStart start2 = parser2.Start();
+System.out.println();
+System.out.println("The abstract syntax tree:");
+start2.dumpAST("");
+System.out.println();
+
+System.out.println("Enter the variable to be substituted:");
+Scanner sc = new Scanner(System.in);
+String var=sc.next();
+System.out.println();
+System.out.println("Enter the substituting applied Lambda expression:");
+Prog2 parser3 = new Prog2(System.in);
+    ASTStart start3 = parser3.Start();
+System.out.println();
+
+System.out.println("The abstract syntax tree:");
+    start3.dumpAST("");
+System.out.println();
+
+System.out.println("The substitution result:");
+SimpleNode resultSub = start2.substitute(var, start3);
+resultSub.dumpAST(" ");
+
+//*******************************Normal Order Evaluation***************************************************//
+
+System.out.println();
+System.out.println("Enter an applied Lambda expression:");
+Prog2 parser4 = new Prog2(System.in);
+ASTStart start4 = parser4.Start();
+
+System.out.println();
+System.out.println("The normal order evaluation result:");
+SimpleNode result = start4.jjtGetChild(0).normalOrderEvaluate();
+result.dumpAST("");
+
+  }
+}
+
+PARSER_END(Prog2)
+
+SKIP : {
+  " " | "\t" | "\n" | "\r"
+}
+
+TOKEN : /* IDENTIFIERS */
+{
+     <L: "L">
+|    <IDENTIFIER: <LETTER> (<LETTER>|<INTEGER>)* >
+|  < #LETTER: ["a"-"z","A"-"K","M"-"Z"] >
+| <INTEGER: (["0"-"9"])+ >
+
+}
+
+ASTStart Start():
+{}
+{
+  Expression() 
+  {return jjtThis;}
+}
+
+void Expression() #void:{}{
+"+" #add |"-" #sub |"*" #mul |"/" #div |"%" #mod | ID() | Int()
+| "(" (Application() | Abstraction()) ")" 
+}
+
+void Application() #void : {}{
+Expression() (Expression() #appl(2) )*
+}
+
+void Abstraction() #void :{}{
+"L" ID() body() #lamb(2)
+}
+void Int():{Token t;}{
+   t=<INTEGER>{
+
+jjtThis.setName(t.image);
+}
+}
+
+void body() #void :{}{
+"." Application() | ID() body() #lamb(2)
+}
+
+void ID():{Token t;}
+{
+   t=<IDENTIFIER>{
+
+jjtThis.setName(t.image);
+}
+}
+
+void Add() : {}
+{
+  "+"
+}
+
+void Sub() : {}
+{
+  "-"
+
+}
+
+void Mul() : {}
+{
+  "*"
+}
+
+void Div() : {}
+{
+ "/" 
+}
+
+void Mod() : {}
+{
+  "%"
+}
+
+
+
+
